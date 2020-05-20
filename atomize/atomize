@@ -98,6 +98,10 @@ import sys
 from optparse import OptionParser
 from os.path import expanduser
 
+MIN_PYTHON = (3, 0)
+if sys.version_info < MIN_PYTHON:
+    sys.exit("Python %s.%s or later is required.\n" % MIN_PYTHON)
+
 def main():
     usage = "usage: \n%prog [options] <yamlstream>\necho <yamlstream> | %prog [options]"
     parser = OptionParser(usage=usage)
@@ -116,7 +120,7 @@ def main():
         sorts = {}
     conf['sorting'] = sorts
     if args[0] != "":
-        stream = file(args[0],'r')
+        stream = open(args[0],'r')
         conf['resdir'] = os.path.splitext(os.path.basename(args[0]))[0]
     else:
         stream = sys.stdin
@@ -132,30 +136,30 @@ def main():
 def load_config(filename):
     if not os.path.exists(filename):
         create_config(filename)
-    conffile = file(filename,'r')
+    conffile = open(filename,'r')
     conf = yaml.load(conffile)
     if conf == None:
-        print "Config file is not in yaml format."
+        print("Config file is not in yaml format.")
         sys.exit()
     if 'categories' not in conf:
-        print "Config file must have 'categories' section."
+        print("Config file must have 'categories' section.")
         sys.exit()
     if 'ordered' not in conf['categories']:
-        print "'categories' section of config must contain 'ordered' section."
+        print("'categories' section of config must contain 'ordered' section.")
         sys.exit()
     for category in conf['categories']['ordered']:
-        print category
+        print(category)
         cat = conf['categories'][category]
-        print "Located in {0}".format(cat['folder'])
+        print("Located in {0}".format(cat['folder']))
         for ktype in cat['kinds']:
-            print "->{0}".format(ktype)
-        print
+            print("->{0}".format(ktype))
+        print('')
     return conf
 
 def load_sorts(filename):
     if not os.path.exists(filename):
         return {}
-    sortdata = yaml.load(file(filename,'r'))
+    sortdata = yaml.load(open(filename,'r'))
     if sortdata == None:
         return {}
     if 'sorting' not in sortdata:
@@ -292,23 +296,23 @@ def splityaml(stream, conf, sort):
         else:
             directory = conf['resdir']
 
-        print "Name: " + name
-        print "Kind: " + kind
-        print
+        print("Name: " + name)
+        print("Kind: " + kind)
+        print('')
 
         filename = directory + "/" + name + "-" + kind + ".yaml"
         with open(filename, "w") as output_stream:
             output_stream.write("---\n")
             if 'apiVersion' in data:
-                yaml.dump({'apiVersion': data['apiVersion']}, output_stream, default_flow_style=False,default_style="")
-            yaml.dump({'kind': data['kind']}, output_stream, default_flow_style=False,default_style="")
-            yaml.dump({'metadata': data['metadata']}, output_stream, default_flow_style=False,default_style="")
+                yaml.dump({'apiVersion': data['apiVersion']}, output_stream, default_flow_style=False,default_style="",allow_unicode=True)
+            yaml.dump({'kind': data['kind']}, output_stream, default_flow_style=False,default_style="",allow_unicode=True)
+            yaml.dump({'metadata': data['metadata']}, output_stream, default_flow_style=False,default_style="",allow_unicode=True)
             for item in data:
                 if item not in ['kind', 'apiVersion', 'metadata']:
                     if item == "data":
-                        yaml.dump({item: data[item]}, output_stream, default_flow_style=False,default_style="|")
+                        yaml.dump({item: data[item]}, output_stream, default_flow_style=False,default_style="|",allow_unicode=True)
                     else:
-                        yaml.dump({item: data[item]}, output_stream, default_flow_style=False,default_style="")
+                        yaml.dump({item: data[item]}, output_stream, default_flow_style=False,default_style="",allow_unicode=True)
 
 def makedirs(conf):
     if 'folders' in conf['sorting']:
@@ -357,8 +361,8 @@ def kustomize(folder):
 
 
 def bail(data):
-    print "Errors found for this:"
-    print data
+    print("Errors found for this:")
+    print(data)
 
 if __name__ == '__main__':
     main()
