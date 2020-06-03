@@ -326,13 +326,13 @@ def splityaml(stream, conf, sort):
                         yaml.dump({item: data[item]}, output_stream, default_flow_style=False,default_style="|",allow_unicode=True)
                     else:
                         yaml.dump({item: data[item]}, output_stream, default_flow_style=False,default_style="",allow_unicode=True)
-    print "Processed: {0}".format(processed)
+    print("Processed: {0}".format(processed))
     if errored > 0:
-        print "Errors: {0}".format(errored)
+        print("Errors: {0}".format(errored))
     if empty > 0:
-        print "Empty: {0}".format(empty)
+        print("Empty: {0}".format(empty))
     if 'blacklist' in conf['sorting']:
-        print "Blocked: {0}".format(blocked)
+        print("Blocked: {0}".format(blocked))
 
 def makedirs(conf):
     if 'folders' in conf['sorting']:
