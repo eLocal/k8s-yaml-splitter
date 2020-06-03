@@ -147,13 +147,13 @@ def load_config(filename):
     if 'ordered' not in conf['categories']:
         print("'categories' section of config must contain 'ordered' section.")
         sys.exit()
-    for category in conf['categories']['ordered']:
-        print(category)
-        cat = conf['categories'][category]
-        print("Located in {0}".format(cat['folder']))
-        for ktype in cat['kinds']:
-            print("->{0}".format(ktype))
-        print('')
+    # for category in conf['categories']['ordered']:
+    #     print(category)
+    #     cat = conf['categories'][category]
+    #     print("Located in {0}".format(cat['folder']))
+    #     for ktype in cat['kinds']:
+    #         print("->{0}".format(ktype))
+    #     print('')
     return conf
 
 def load_sorts(filename):
@@ -208,10 +208,15 @@ def create_config(filename):
                     'Deployment',
                     'DaemonSet',
                     'StatefulSet',
+                    'Job',
                     'ConfigMap',
                     'Secret',
                     'HorizontalPodAutoscaler',
-                    'PodDisruptionBudget'
+                    'Pod',
+                    'PodSecurityPolicy',
+                    'PodDisruptionBudget',
+                    'Prometheus',
+                    'Alertmanager'
                 ]
             },
             'network': {
@@ -240,8 +245,6 @@ def create_config(filename):
             'monitor': {
                 'folder': 'monitor',
                 'kinds': [
-                    'Prometheus',
-                    'Alertmanager',
                     'PrometheusRule',
                     'ServiceMonitor'
                 ]
@@ -254,23 +257,32 @@ def create_config(filename):
 
 def splityaml(stream, conf, sort):
     makedirs(conf)
+    processed = 0
+    blocked = 0
+    empty = 0
+    errored = 0
     for data in yaml.safe_load_all(stream):
         if data == None:
+            empty += 1
             continue
         if 'metadata' in data:
             metadata = data['metadata']
         else:
+            errored += 1
             bail(data)
             continue
         if 'kind' in data:
             kind = data['kind']
         else:
+            errored += 1
             bail(data)
             continue
         if 'name' in metadata:
             name = metadata['name']
         else:
+            errored += 1
             bail(data)
+            continue
 
         labels = []
         if 'labels' in metadata:
@@ -282,6 +294,10 @@ def splityaml(stream, conf, sort):
         if sort:
             directory = conf['resdir'] + '/other'
             subdir = ''
+            if 'blacklist' in conf['sorting']:
+                if resourcename in conf['sorting']['blacklist']:
+                    blocked += 1
+                    continue
             if 'labels' in conf['sorting']:
                 for label in conf['sorting']['labels']:
                     if label in labels:
@@ -295,10 +311,7 @@ def splityaml(stream, conf, sort):
                     directory = conf['resdir'] + "/" + subdir + "/" + conf['categories'][category]['folder']
         else:
             directory = conf['resdir']
-
-        print("Name: " + name)
-        print("Kind: " + kind)
-        print('')
+        processed += 1
 
         filename = directory + "/" + name + "-" + kind + ".yaml"
         with open(filename, "w") as output_stream:
@@ -313,6 +326,13 @@ def splityaml(stream, conf, sort):
                         yaml.dump({item: data[item]}, output_stream, default_flow_style=False,default_style="|",allow_unicode=True)
                     else:
                         yaml.dump({item: data[item]}, output_stream, default_flow_style=False,default_style="",allow_unicode=True)
+    print "Processed: {0}".format(processed)
+    if errored > 0:
+        print "Errors: {0}".format(errored)
+    if empty > 0:
+        print "Empty: {0}".format(empty)
+    if 'blacklist' in conf['sorting']:
+        print "Blocked: {0}".format(blocked)
 
 def makedirs(conf):
     if 'folders' in conf['sorting']:
