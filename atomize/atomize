@@ -368,14 +368,14 @@ def kustomize(folder):
             output_stream.write("\n")
             if filenames != []:
                 output_stream.write("resources:\n")
-                for filename in filenames:
+                for filename in sorted(filenames):
                     if filename != "kustomization.yaml":
                         output_stream.write("  - " + filename + "\n")
             if filenames != [] and directorynames != []:
                 output_stream.write("\n")
             if directorynames != []:
                 output_stream.write("bases:\n")
-                for directoryname in directorynames:
+                for directoryname in sorted(directorynames):
                     if not directoryname.startswith("."):
                         output_stream.write("  - " + directoryname + "\n")
 
